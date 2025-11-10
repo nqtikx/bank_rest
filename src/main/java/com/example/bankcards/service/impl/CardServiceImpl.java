@@ -10,6 +10,9 @@ import com.example.bankcards.util.CryptoConverter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.example.bankcards.exception.BadRequestException;
+import com.example.bankcards.exception.NotFoundException;
+
 
 @Service
 public class CardServiceImpl implements com.example.bankcards.service.CardService {
@@ -28,7 +31,6 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
         card.setExpiry(req.expiry());
         card.setStatus(CardStatus.ACTIVE);
         var saved = repo.save(card);
-        // для маски — расшифровываем локально, PAN наружу не возвращаем
         var pan = crypto.convertToEntityAttribute(saved.getPanEncrypted());
         return CardMapper.toDto(saved, pan);
     }
@@ -42,4 +44,33 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
         return repo.findByOwnerIgnoreCaseAndStatusIn(owner, st, pageable)
                 .map(c -> CardMapper.toDto(c, crypto.convertToEntityAttribute(c.getPanEncrypted())));
     }
+    private Card getOr404(Long id) {
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("Card not found: " + id));
+    }
+
+    @Override
+    public void block(Long id) {
+        var c = getOr404(id);
+        if (c.getStatus() == CardStatus.BLOCKED) throw new BadRequestException("Already blocked");
+        if (c.getStatus() == CardStatus.EXPIRED) throw new BadRequestException("Expired card cannot be blocked");
+        c.setStatus(CardStatus.BLOCKED);
+        repo.save(c);
+    }
+
+    @Override
+    public void activate(Long id) {
+        var c = getOr404(id);
+        if (c.getStatus() == CardStatus.ACTIVE) throw new BadRequestException("Already active");
+        if (c.getExpiry().isBefore(java.time.LocalDate.now()))
+            throw new BadRequestException("Expired card cannot be activated");
+        c.setStatus(CardStatus.ACTIVE);
+        repo.save(c);
+    }
+
+    @Override
+    public void delete(Long id) {
+        var c = getOr404(id);
+        repo.delete(c);
+    }
 }
+

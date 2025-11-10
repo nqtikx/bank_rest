@@ -8,4 +8,8 @@ import org.springframework.data.domain.Pageable;
 public interface CardService {
     CardDto create(CreateCardRequest req);
     Page<CardDto> listByOwner(String owner, String[] statuses, Pageable pageable);
+    void block(Long id);
+    void activate(Long id);
+    void delete(Long id);
+
 }

@@ -1,5 +1,7 @@
 package com.example.bankcards.service.impl;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.dto.CreateCardRequest;
 import com.example.bankcards.entity.Card;
@@ -32,9 +34,10 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
 
     @Override
     public CardDto create(CreateCardRequest req) {
+        var username = currentUsername();
         var card = new Card();
         card.setPanEncrypted(crypto.convertToDatabaseColumn(req.pan()));
-        card.setOwner(req.owner());
+        card.setOwner(username);
         card.setExpiry(req.expiry());
         card.setStatus(CardStatus.ACTIVE);
         var saved = repo.save(card);
@@ -44,11 +47,13 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
 
     @Override
     public Page<CardDto> listByOwner(String owner, String[] statuses, Pageable pageable) {
+        var username = currentUsername();
+
         var st = statuses == null || statuses.length == 0
                 ? new CardStatus[]{CardStatus.ACTIVE, CardStatus.BLOCKED, CardStatus.EXPIRED}
                 : java.util.Arrays.stream(statuses).map(String::toUpperCase).map(CardStatus::valueOf).toArray(CardStatus[]::new);
 
-        return repo.findByOwnerIgnoreCaseAndStatusIn(owner, st, pageable)
+        return repo.findByOwnerIgnoreCaseAndStatusIn(username, st, pageable)
                 .map(c -> CardMapper.toDto(c, crypto.convertToEntityAttribute(c.getPanEncrypted())));
     }
     private Card getOr404(Long id) {
@@ -83,15 +88,16 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
     @Transactional
     @Override
     public TransferDto transfer(TransferRequest req) {
+        var username = currentUsername();
+
         if (req.fromCardId().equals(req.toCardId()))
             throw new BadRequestException("from == to");
 
         var from = getOr404(req.fromCardId());
         var to = getOr404(req.toCardId());
 
-        // оба принадлежат одному владельцу (пока без Security, owner приходит в запросе)
-        if (!from.getOwner().equalsIgnoreCase(req.owner()) || !to.getOwner().equalsIgnoreCase(req.owner()))
-            throw new BadRequestException("Cards must belong to the same owner");
+        if (!from.getOwner().equalsIgnoreCase(username) || !to.getOwner().equalsIgnoreCase(username))
+            throw new BadRequestException("Cards must belong to the authenticated owner");
 
         if (from.getStatus() != CardStatus.ACTIVE || to.getStatus() != CardStatus.ACTIVE)
             throw new BadRequestException("Both cards must be ACTIVE");
@@ -109,7 +115,7 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
         repo.save(to);
 
         var t = new CardTransfer();
-        t.setOwner(req.owner());
+        t.setOwner(username);
         t.setFromCardId(from.getId());
         t.setToCardId(to.getId());
         t.setAmount(amount);
@@ -119,6 +125,13 @@ public class CardServiceImpl implements com.example.bankcards.service.CardServic
                 saved.getId(), saved.getOwner(), saved.getFromCardId(),
                 saved.getToCardId(), saved.getAmount(), saved.getCreatedAt()
         );
+    }
+    private String currentUsername() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new BadRequestException("Unauthenticated");
+        }
+        return (String) auth.getPrincipal();
     }
 }
 

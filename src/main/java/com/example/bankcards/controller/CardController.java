@@ -21,13 +21,12 @@ public class CardController {
     }
 
     @GetMapping
-    public Page<CardDto> listByOwner(
-            @RequestParam String owner,
+    public Page<CardDto> list(
             @RequestParam(required = false) String[] statuses,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return service.listByOwner(owner, statuses, PageRequest.of(page, size));
+        return service.listByOwner(null, statuses, PageRequest.of(page, size));
     }
     @PatchMapping("/{id}/block")
     public void block(@PathVariable Long id) { service.block(id); }

@@ -29,4 +29,13 @@ public class CardController {
     ) {
         return service.listByOwner(owner, statuses, PageRequest.of(page, size));
     }
+    @PatchMapping("/{id}/block")
+    public void block(@PathVariable Long id) { service.block(id); }
+
+    @PatchMapping("/{id}/activate")
+    public void activate(@PathVariable Long id) { service.activate(id); }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) { service.delete(id); }
+
 }

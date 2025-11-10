@@ -38,4 +38,12 @@ public class CardController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) { service.delete(id); }
 
+    @PostMapping("/transfer")
+    public com.example.bankcards.dto.TransferDto transfer(
+            @RequestBody @jakarta.validation.Valid com.example.bankcards.dto.TransferRequest req
+    ) {
+        return service.transfer(req);
+    }
+
+
 }

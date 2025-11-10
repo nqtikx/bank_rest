@@ -11,5 +11,7 @@ public interface CardService {
     void block(Long id);
     void activate(Long id);
     void delete(Long id);
+    com.example.bankcards.dto.TransferDto transfer(com.example.bankcards.dto.TransferRequest req);
+
 
 }

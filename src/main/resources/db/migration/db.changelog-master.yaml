@@ -21,3 +21,250 @@ databaseChangeLog:
                   name: balance
                   type: NUMERIC(12,2)
                   defaultValueNumeric: 0.00
+
+  - changeSet:
+      id: 2-card-table
+      author: you
+      changes:
+        - createTable:
+            tableName: cards
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pan_encrypted
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owner
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiry
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: NUMERIC(14,2)
+                  defaultValueNumeric: 0.00
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: cards
+            indexName: idx_cards_owner
+            columns:
+              - column:
+                  name: owner
+
+  - changeSet:
+      id: 3-card-transfers
+      author: you
+      changes:
+        - createTable:
+            tableName: card_transfers
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: owner
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: from_card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: to_card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: NUMERIC(14,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: card_transfers
+            baseColumnNames: from_card_id
+            referencedTableName: cards
+            referencedColumnNames: id
+            constraintName: fk_transfer_from_card
+        - addForeignKeyConstraint:
+            baseTableName: card_transfers
+            baseColumnNames: to_card_id
+            referencedTableName: cards
+            referencedColumnNames: id
+            constraintName: fk_transfer_to_card
+
+  - changeSet:
+      id: 4-users-and-roles
+      author: you
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: roles
+            columnNames: name
+            constraintName: uq_roles_name
+
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: username
+            constraintName: uq_users_username
+        - addForeignKeyConstraint:
+            baseTableName: users
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: fk_users_roles
+
+  - changeSet:
+      id: 005-add-enabled-to-users
+      author: you
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: users
+            columnName: enabled
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+  # МИГРАЦИЯ на user_roles + перенос данных + удаление старого users.role_id
+  - changeSet:
+      id: 006-users-to-user_roles
+      author: you
+      preConditions:
+        # Если таблица уже есть, помечаем как выполненный и пропускаем (обход бага Liquibase)
+        onFail: MARK_RAN
+        sqlCheck:
+          expectedResult: "0"
+          sql: >
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'user_roles'
+      changes:
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: user_roles
+            columnNames: user_id, role_id
+            constraintName: pk_user_roles
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_user_roles_user
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: fk_user_roles_role
+            onDelete: CASCADE
+        - sql:
+            comment: "Перенос старых связей users.role_id -> user_roles"
+            splitStatements: false
+            sql: |
+              INSERT INTO user_roles (user_id, role_id)
+              SELECT id, role_id FROM users WHERE role_id IS NOT NULL
+              ON CONFLICT DO NOTHING;
+        - dropForeignKeyConstraint:
+            baseTableName: users
+            constraintName: fk_users_roles
+        - dropColumn:
+            tableName: users
+            columnName: role_id
+
+  - changeSet:
+      id: 007-seed-roles
+      author: you
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO roles (name)
+              SELECT 'ADMIN'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name='ADMIN');
+
+              INSERT INTO roles (name)
+              SELECT 'USER'
+              WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name='USER');

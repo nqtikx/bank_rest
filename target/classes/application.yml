@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -20,8 +20,8 @@ spring:
     change-log: classpath*:db/migration/db.changelog-master.yaml
 
   jwt:
-    secret: "myamyamyamya123!@#"
-    expiration: 3600000
+    secret: "myamyamyamya123!@#supersecretkey2025"
+    expiration: 36000000
 
 springdoc:
   api-docs:

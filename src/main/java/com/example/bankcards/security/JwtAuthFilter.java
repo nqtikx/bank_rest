@@ -38,7 +38,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 var userOpt = users.findByUsernameIgnoreCase(username);
                 if (userOpt.isPresent() && userOpt.get().isEnabled()) {
-                    var authentication = new UsernamePasswordAuthenticationToken(username, null, roles);
+                    var userDetails = org.springframework.security.core.userdetails.User
+                            .withUsername(userOpt.get().getUsername())
+                            .password(userOpt.get().getPasswordHash())
+                            .authorities(roles)
+                            .build();
+                    var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, roles);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (Exception ignored) { /* токен плохой — идём дальше без контекста */ }

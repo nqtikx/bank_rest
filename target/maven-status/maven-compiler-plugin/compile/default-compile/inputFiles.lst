@@ -1,6 +1,5 @@
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\entity\Role.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\config\OpenApiConfig.java
-E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\repository\UserRepository.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\entity\UserAccount.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\controller\HelloController.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\entity\CardStatus.java
@@ -34,7 +33,6 @@ E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\service\
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\dto\TransferRequest.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\service\CardService.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\BankcardsApplication.java
-E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\entity\User.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\entity\Card.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\dto\TokenResponse.java
 E:\download\trash\tryhard\bank_rest\src\main\java\com\example\bankcards\entity\BankAccount.java

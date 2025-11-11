@@ -14,7 +14,6 @@ com\example\bankcards\dto\BankAccountDto.class
 com\example\bankcards\repository\CardTransferRepository.class
 com\example\bankcards\BankcardsApplication.class
 com\example\bankcards\dto\LoginRequest.class
-com\example\bankcards\entity\User.class
 com\example\bankcards\controller\HelloController.class
 com\example\bankcards\repository\CardRepository.class
 com\example\bankcards\security\SecurityConfig.class
@@ -36,7 +35,6 @@ com\example\bankcards\entity\CardStatus.class
 com\example\bankcards\util\CryptoConverter.class
 com\example\bankcards\entity\UserAccount.class
 com\example\bankcards\entity\Card.class
-com\example\bankcards\repository\UserRepository.class
 com\example\bankcards\service\BankService.class
 com\example\bankcards\service\impl\CardServiceImpl.class
 com\example\bankcards\util\MapperUtil.class

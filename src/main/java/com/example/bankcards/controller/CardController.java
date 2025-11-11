@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,42 +27,51 @@ public class CardController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')") // создавать карты — только ADMIN
     @Operation(summary = "Create a new card for the authenticated user")
-    public CardDto create(@RequestBody @Valid CreateCardRequest req) {
-        return service.create(req);
+    public CardDto create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User me,
+                          @RequestBody @Valid CreateCardRequest req) {
+        return service.createForOwner(me.getUsername(), req);
     }
 
+
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @Operation(summary = "List all cards of the authenticated user")
     public Page<CardDto> list(
-            @RequestParam(required = false) String[] statuses,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(name = "statuses", required = false) String[] statuses,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         return service.listByOwner(null, statuses, PageRequest.of(page, size));
     }
 
     @PatchMapping("/{id}/block")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Block a card")
     public void block(@PathVariable Long id) {
         service.block(id);
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Activate a card")
     public void activate(@PathVariable Long id) {
         service.activate(id);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a card")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
 
     @PostMapping("/transfer")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @Operation(summary = "Transfer money between own cards")
-    public TransferDto transfer(@RequestBody @Valid TransferRequest req) {
-        return service.transfer(req);
+    public TransferDto transfer(@RequestBody @Valid TransferRequest req,
+                                @AuthenticationPrincipal UserDetails me) {
+        return service.transfer(me.getUsername(), req);
     }
 }

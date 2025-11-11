@@ -148,4 +148,16 @@ public class CardServiceImpl implements CardService {
         throw new BadRequestException("Unsupported principal type: " + principal.getClass());
     }
 
+    @Override
+    public Page<CardDto> listAll(String[] statuses, Pageable pageable) {
+        var st = statuses == null || statuses.length == 0
+                ? new CardStatus[]{CardStatus.ACTIVE, CardStatus.BLOCKED, CardStatus.EXPIRED}
+                : java.util.Arrays.stream(statuses)
+                .map(String::toUpperCase)
+                .map(CardStatus::valueOf)
+                .toArray(CardStatus[]::new);
+
+        return repo.findByStatusIn(st, pageable)
+                .map(c -> CardMapper.toDto(c, crypto.convertToEntityAttribute(c.getPanEncrypted())));
+    }
 }

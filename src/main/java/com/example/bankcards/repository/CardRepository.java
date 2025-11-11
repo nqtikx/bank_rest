@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CardRepository extends JpaRepository<Card, Long> {
     Page<Card> findByOwnerIgnoreCaseAndStatusIn(String owner, CardStatus[] statuses, Pageable pageable);
+    Page<Card> findByStatusIn(CardStatus[] statuses, Pageable pageable);
+
 }

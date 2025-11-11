@@ -15,4 +15,6 @@ public interface CardService {
     void activate(Long id);
     void delete(Long id);
     TransferDto transfer(String ownerUsername, TransferRequest req);
+    Page<CardDto> listAll(String[] statuses, Pageable pageable);
+
 }

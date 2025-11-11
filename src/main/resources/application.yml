@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5342/bank_db
-    username: postgres
-    password: admin
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bankcards}
+    username: ${SPRING_DATASOURCE_USERNAME:bankuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:bankpass}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -19,9 +19,9 @@ spring:
   liquibase:
     change-log: classpath*:db/migration/db.changelog-master.yaml
 
-  jwt:
-    secret: "myamyamyamya123!@#supersecretkey2025"
-    expiration: 36000000
+jwt:
+  secret: ${JWT_SECRET:myamyamyamya123!@#supersecretkey2025}
+  expiration: 36000000
 
 springdoc:
   api-docs:

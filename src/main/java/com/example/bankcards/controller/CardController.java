@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +31,11 @@ public class CardController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')") // создавать карты — только ADMIN
     @Operation(summary = "Create a new card for the authenticated user")
-    public CardDto create(@AuthenticationPrincipal org.springframework.security.core.userdetails.User me,
-                          @RequestBody @Valid CreateCardRequest req) {
-        return service.createForOwner(me.getUsername(), req);
+    public ResponseEntity<CardDto> create(@AuthenticationPrincipal User user,
+                                          @RequestBody CreateCardRequest req) {
+        var created = service.create(req);
+        return ResponseEntity.ok(created);
     }
-
 
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")

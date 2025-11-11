@@ -1,10 +1,14 @@
 package com.example.bankcards.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Future;
 import java.time.LocalDate;
 
 public record CreateCardRequest(
-        @NotBlank String pan,
-        @NotBlank @Size(max = 100) String owner,
-        @NotNull LocalDate expiry
+        @NotBlank
+        @Pattern(regexp = "\\d{16}", message = "PAN must be 16 digits")
+        String pan,
+        @Future(message = "expiry must be in the future")
+        LocalDate expiry
 ) {}

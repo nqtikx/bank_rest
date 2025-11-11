@@ -7,6 +7,5 @@ import java.math.BigDecimal;
 public record TransferRequest(
         @NotNull Long fromCardId,
         @NotNull Long toCardId,
-        @DecimalMin(value = "0.01") BigDecimal amount,
-        @NotNull String owner
+        @DecimalMin(value = "0.01") BigDecimal amount
 ) {}
